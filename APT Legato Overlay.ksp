@@ -1,0 +1,253 @@
+{
+APT's Legato Overlay Script for Kontakt
+Originally Released at https://github.com/pgapt123/
+1.0.0 2022.4.19
+}
+
+on init
+    set_ui_height_px(115)
+    set_script_title("APT - Legato Overlay")
+
+    declare ui_label $ch2_text(1, 6)
+    set_text($ch2_text, "Ch 2 Short Overlay Mode")
+    set_control_par(get_ui_id($ch2_text),$CONTROL_PAR_WIDTH,120)
+    set_control_par(get_ui_id($ch2_text),$CONTROL_PAR_POS_X,80)
+    set_control_par(get_ui_id($ch2_text),$CONTROL_PAR_POS_Y,0)
+
+    declare ui_button $mode_0
+    set_control_par(get_ui_id($mode_0),$CONTROL_PAR_WIDTH,100)
+    set_control_par(get_ui_id($mode_0),$CONTROL_PAR_POS_X,100)
+    set_control_par(get_ui_id($mode_0),$CONTROL_PAR_POS_Y,20)
+    set_text($mode_0,"No Overlay")
+    $mode_0 := 0
+
+    declare ui_button $mode_1
+    set_control_par(get_ui_id($mode_1),$CONTROL_PAR_WIDTH,100)
+    set_control_par(get_ui_id($mode_1),$CONTROL_PAR_POS_X,100)
+    set_control_par(get_ui_id($mode_1),$CONTROL_PAR_POS_Y,40)
+    set_text($mode_1,"Overlay 1st Note")
+    $mode_1 := 1
+
+    declare ui_button $mode_2
+    set_control_par(get_ui_id($mode_2),$CONTROL_PAR_WIDTH,100)
+    set_control_par(get_ui_id($mode_2),$CONTROL_PAR_POS_X,100)
+    set_control_par(get_ui_id($mode_2),$CONTROL_PAR_POS_Y,60)
+    set_text($mode_2,"Always Overlay")
+    $mode_2 := 0
+
+    declare $mode := 1
+
+    {=== Mode KS ===}
+    declare ui_button $mode_ks_on
+    set_control_par(get_ui_id($mode_ks_on),$CONTROL_PAR_WIDTH,100)
+    set_control_par(get_ui_id($mode_ks_on),$CONTROL_PAR_POS_X,350)
+    set_control_par(get_ui_id($mode_ks_on),$CONTROL_PAR_POS_Y,0)
+    set_text($mode_ks_on,"Use KS to Set Mode")
+    $mode_ks_on := 0
+
+    declare ui_value_edit $mode_ks(0, 126, $VALUE_EDIT_MODE_NOTE_NAMES) 
+    set_control_par(get_ui_id($mode_ks), $CONTROL_PAR_WIDTH, 40)
+    set_control_par(get_ui_id($mode_ks),$CONTROL_PAR_POS_X,460)
+    set_control_par(get_ui_id($mode_ks),$CONTROL_PAR_POS_Y,0)
+    set_text($mode_ks, "")
+    $mode_ks := 0
+
+    declare ui_button $button_midilearn_ks
+    set_control_par(get_ui_id($button_midilearn_ks),$CONTROL_PAR_WIDTH,100)
+    set_control_par(get_ui_id($button_midilearn_ks),$CONTROL_PAR_POS_X,510)
+    set_control_par(get_ui_id($button_midilearn_ks),$CONTROL_PAR_POS_Y,0)
+    set_text($button_midilearn_ks,"MIDI Learn")
+    $button_midilearn_ks := 0
+
+    make_persistent($mode_ks_on)
+    make_persistent($mode_ks)
+    read_persistent_var($mode_ks_on)
+    read_persistent_var($mode_ks)
+
+    declare ui_button $send_cc_to_ch2
+    set_control_par(get_ui_id($send_cc_to_ch2),$CONTROL_PAR_WIDTH,120)
+    set_control_par(get_ui_id($send_cc_to_ch2),$CONTROL_PAR_POS_X,80)
+    set_control_par(get_ui_id($send_cc_to_ch2),$CONTROL_PAR_POS_Y,83)
+    set_text($send_cc_to_ch2,"Send CC to Ch 2")
+    $send_cc_to_ch2 := 0
+    make_persistent($send_cc_to_ch2)
+    read_persistent_var($send_cc_to_ch2)
+
+    declare ui_label $help(1, 4)
+    set_text($help, ">>  [ KS ]  For Ch 2  <<")
+    add_text_line($help, "Vel  1 .. 49       - No")
+    add_text_line($help, "Vel  50 .. 119    - First")
+    add_text_line($help, "Vel  120 .. 127  - Always")
+    set_control_par(get_ui_id($help),$CONTROL_PAR_WIDTH,125)
+    set_control_par(get_ui_id($help),$CONTROL_PAR_HEIGHT,65)
+    set_control_par(get_ui_id($help),$CONTROL_PAR_POS_X,350)
+    set_control_par(get_ui_id($help),$CONTROL_PAR_POS_Y,20)
+
+    declare ui_label $help2(1, 4)
+    set_text($help2, ">>  [ KS + 1 ]  For Ch 3  <<")
+    add_text_line($help2, "Vel  1 .. 63        - Off")
+    add_text_line($help2, "Vel  64 .. 127    - On")
+    set_control_par(get_ui_id($help2),$CONTROL_PAR_WIDTH,125)
+    set_control_par(get_ui_id($help2),$CONTROL_PAR_HEIGHT,65)
+    set_control_par(get_ui_id($help2),$CONTROL_PAR_POS_X,480)
+    set_control_par(get_ui_id($help2),$CONTROL_PAR_POS_Y,20)
+
+    {=== CH3 for Long Overlay ===}
+    declare ui_button $long_overlay_on
+    set_control_par(get_ui_id($long_overlay_on),$CONTROL_PAR_WIDTH,120)
+    set_control_par(get_ui_id($long_overlay_on),$CONTROL_PAR_POS_X,220)
+    set_control_par(get_ui_id($long_overlay_on),$CONTROL_PAR_POS_Y,0)
+    set_text($long_overlay_on,"Ch 3 for Long Overlay")
+    $long_overlay_on := 0
+    make_persistent($long_overlay_on)
+    read_persistent_var($long_overlay_on)
+
+    declare ui_button $send_cc_to_ch3
+    set_control_par(get_ui_id($send_cc_to_ch3),$CONTROL_PAR_WIDTH,120)
+    set_control_par(get_ui_id($send_cc_to_ch3),$CONTROL_PAR_POS_X,220)
+    set_control_par(get_ui_id($send_cc_to_ch3),$CONTROL_PAR_POS_Y,83)
+    set_text($send_cc_to_ch3,"Send CC to Ch 3")
+    $send_cc_to_ch3 := 0
+    make_persistent($send_cc_to_ch3)
+    read_persistent_var($send_cc_to_ch3)
+
+    {=== Panic ===}
+    declare ui_button $panic
+    set_control_par(get_ui_id($panic),$CONTROL_PAR_WIDTH,60)
+    set_control_par(get_ui_id($panic),$CONTROL_PAR_POS_X,0)
+    set_control_par(get_ui_id($panic),$CONTROL_PAR_POS_Y,50)
+    set_text($panic,"Panic!")
+    $panic := 0
+
+    {=== Others ===}
+    declare $cnt := 0
+    declare %short_note_pressed[128]
+    declare %long_note_pressed[128]
+
+    declare $last_note
+    
+end on
+
+on ui_control ($panic)
+    $cnt := 0
+    while ($cnt < 128)
+        %short_note_pressed[$cnt] := 0
+        %long_note_pressed[$cnt] := 0
+        inc($cnt)
+    end while
+    $cnt := 0
+    $panic := 0
+end on
+
+on ui_control ($mode_0)
+    $mode_0 := 1
+    $mode_1 := 0
+    $mode_2 := 0
+    $mode := 0
+end on 
+
+on ui_control ($mode_1)
+    $mode_0 := 0
+    $mode_1 := 1
+    $mode_2 := 0
+    $mode := 1
+end on 
+
+on ui_control ($mode_2)
+    $mode_0 := 0
+    $mode_1 := 0
+    $mode_2 := 1
+    $mode := 2
+end on 
+
+on midi_in
+    
+    ignore_midi 
+
+    {=== MIDI Learn ===}
+    if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0 and $button_midilearn_ks = 1)    
+        $button_midilearn_ks := 0
+        $mode_ks := $MIDI_BYTE_1
+        exit
+    end if
+
+    {=== Mode Key Switch ===}
+    if ($mode_ks_on = 1 and ($MIDI_BYTE_1 = $mode_ks or $MIDI_BYTE_1 = $mode_ks + 1))                        
+        if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0)
+            if($MIDI_BYTE_1 = $mode_ks)
+                if ($MIDI_BYTE_2 < 50)
+                    $mode_0 := 1
+                    $mode_1 := 0
+                    $mode_2 := 0
+                    $mode := 0
+                else if ($MIDI_BYTE_2 < 120)
+                    $mode_0 := 0
+                    $mode_1 := 1
+                    $mode_2 := 0
+                    $mode := 1
+                else
+                    $mode_0 := 0
+                    $mode_1 := 0
+                    $mode_2 := 1
+                    $mode := 2
+                end if
+                end if 
+            else if($MIDI_BYTE_1 = $mode_ks + 1)
+                if ($MIDI_BYTE_2 < 64)
+                    $long_overlay_on := 0
+                else 
+                    $long_overlay_on := 1
+                end if
+            end if 
+            end if 
+        end if 
+        exit 
+    end if 
+
+    {=== Send Main ===}
+    set_midi(0, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+
+    {=== Send Overlay ===}
+    if (($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON) and ($MIDI_BYTE_2{vel} # 0))     {Note On}
+        inc($cnt) 
+        if (($mode = 1 and $cnt <= 1) or ($mode = 2))
+            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            %short_note_pressed[$MIDI_BYTE_1] := 1
+        end if
+
+        if ($long_overlay_on = 1)
+            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            %long_note_pressed[$MIDI_BYTE_1] := 1
+        end if
+
+        if ($cnt > 1)
+            set_midi(1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
+            set_midi(2, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
+        end if
+
+        $last_note := $MIDI_BYTE_1
+
+    else if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_OFF or ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2{vel} = 0))   {Note Off}
+        dec($cnt) 
+        if (%short_note_pressed[$MIDI_BYTE_1] = 1)
+            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            %short_note_pressed[$MIDI_BYTE_1] := 0
+        end if
+        if (%long_note_pressed[$MIDI_BYTE_1] = 1)
+            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            %long_note_pressed[$MIDI_BYTE_1] := 0
+        end if
+
+    else    {Others, Send to Ch2 and Ch3?}
+        if ($send_cc_to_ch2 = 1)
+            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+        end if 
+
+        if ($long_overlay_on = 1 and $send_cc_to_ch3 = 1)
+            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+        end if 
+
+    end if
+    end if
+
+end on

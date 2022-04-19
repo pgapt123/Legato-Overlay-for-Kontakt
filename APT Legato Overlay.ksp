@@ -204,6 +204,10 @@ on midi_in
         exit 
     end if 
 
+    if ($PLAYED_VOICES_TOTAL = 0)
+        $cnt := 0
+    end if
+
     {=== Send Main ===}
     set_midi(0, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
 

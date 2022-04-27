@@ -1,7 +1,7 @@
 {
 APT's Legato Overlay Script for Kontakt
 Originally Released at https://github.com/pgapt123/
-1.1.0 2022.4.26
+1.1.1 2022.4.28
 }
 
 on init
@@ -188,7 +188,7 @@ on midi_in
     ignore_midi 
 
     {=== Mode Key Switch ===}
-    if ($mode_ks_on = 1 and ($MIDI_BYTE_1 = $mode_ks or $MIDI_BYTE_1 = $mode_ks + 1))                        
+    if ($mode_ks_on = 1 and $MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and ($MIDI_BYTE_1 = $mode_ks or $MIDI_BYTE_1 = $mode_ks + 1))                        
         if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0)
             if($MIDI_BYTE_1 = $mode_ks)
                 if ($MIDI_BYTE_2 < 50)

@@ -1,7 +1,7 @@
 {
 APT's Legato Overlay Script for Kontakt
 Originally Released at https://github.com/pgapt123/
-1.0.0 2022.4.19
+1.1.0 2022.4.26
 }
 
 on init
@@ -111,6 +111,17 @@ on init
     make_persistent($send_cc_to_ch3)
     read_persistent_var($send_cc_to_ch3)
 
+    {=== Starting Channel ===}
+    declare ui_value_edit $start_ch(1, 16, 1) 
+    set_control_par(get_ui_id($start_ch), $CONTROL_PAR_WIDTH, 150)
+    set_control_par(get_ui_id($start_ch),$CONTROL_PAR_POS_X,350)
+    set_control_par(get_ui_id($start_ch),$CONTROL_PAR_POS_Y,90)
+    set_text($start_ch, "Starting Channel")
+    $start_ch := 1
+
+    make_persistent($start_ch)
+    read_persistent_var($start_ch)
+
     {=== Panic ===}
     declare ui_button $panic
     set_control_par(get_ui_id($panic),$CONTROL_PAR_WIDTH,60)
@@ -161,15 +172,20 @@ on ui_control ($mode_2)
 end on 
 
 on midi_in
-    
-    ignore_midi 
 
     {=== MIDI Learn ===}
-    if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0 and $button_midilearn_ks = 1)    
+    if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0 and $button_midilearn_ks = 1) 
+        ignore_midi 
         $button_midilearn_ks := 0
         $mode_ks := $MIDI_BYTE_1
         exit
     end if
+
+    if ($MIDI_CHANNEL # $start_ch - 1)
+        exit
+    end if
+
+    ignore_midi 
 
     {=== Mode Key Switch ===}
     if ($mode_ks_on = 1 and ($MIDI_BYTE_1 = $mode_ks or $MIDI_BYTE_1 = $mode_ks + 1))                        
@@ -209,24 +225,24 @@ on midi_in
     end if
 
     {=== Send Main ===}
-    set_midi(0, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+    set_midi($start_ch-1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
 
     {=== Send Overlay ===}
     if (($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON) and ($MIDI_BYTE_2{vel} # 0))     {Note On}
         inc($cnt) 
         if (($mode = 1 and $cnt <= 1) or ($mode = 2))
-            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
             %short_note_pressed[$MIDI_BYTE_1] := 1
         end if
 
         if ($long_overlay_on = 1)
-            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
             %long_note_pressed[$MIDI_BYTE_1] := 1
         end if
 
         if ($cnt > 1)
-            set_midi(1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
-            set_midi(2, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
+            set_midi($start_ch-1 + 1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
+            set_midi($start_ch-1 + 2, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
         end if
 
         $last_note := $MIDI_BYTE_1
@@ -234,21 +250,21 @@ on midi_in
     else if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_OFF or ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2{vel} = 0))   {Note Off}
         dec($cnt) 
         if (%short_note_pressed[$MIDI_BYTE_1] = 1)
-            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
             %short_note_pressed[$MIDI_BYTE_1] := 0
         end if
         if (%long_note_pressed[$MIDI_BYTE_1] = 1)
-            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
             %long_note_pressed[$MIDI_BYTE_1] := 0
         end if
 
     else    {Others, Send to Ch2 and Ch3?}
         if ($send_cc_to_ch2 = 1)
-            set_midi(1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
         end if 
 
         if ($long_overlay_on = 1 and $send_cc_to_ch3 = 1)
-            set_midi(2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
         end if 
 
     end if

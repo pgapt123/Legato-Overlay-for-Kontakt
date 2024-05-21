@@ -1,12 +1,28 @@
 {
 APT's Legato Overlay Script for Kontakt
 Originally Released at https://github.com/pgapt123/
-1.1.1 2022.4.28
+v1.5
+
+
+1.2: Add ch3 offset
+1.3 (2022.7.27): Add playing range settings. Add realtime msgbox
+
+1.5 (2024.5.22): Add pedal detection
 }
 
 on init
-    set_ui_height_px(115)
+    set_ui_height_px(135)
     set_script_title("APT - Legato Overlay")
+
+    declare ui_label $msgbox(1,2)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_WIDTH, 300)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_HEIGHT, 66)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_POS_X, 80)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_POS_Y, 100)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_FONT_TYPE, 13)
+    set_control_par(get_ui_id($msgbox), $CONTROL_PAR_TEXT_ALIGNMENT, 1)
+    hide_part($msgbox, $HIDE_PART_BG)
+    set_text($msgbox, "")
 
     declare ui_label $ch2_text(1, 6)
     set_text($ch2_text, "Ch 2 Short Overlay Mode")
@@ -102,6 +118,13 @@ on init
     make_persistent($long_overlay_on)
     read_persistent_var($long_overlay_on)
 
+    declare ui_value_edit $ch3_offset(3, 16, 1) 
+    set_control_par(get_ui_id($ch3_offset), $CONTROL_PAR_WIDTH, 120)
+    set_control_par(get_ui_id($ch3_offset),$CONTROL_PAR_POS_X,220)
+    set_control_par(get_ui_id($ch3_offset),$CONTROL_PAR_POS_Y,20)
+    set_text($ch3_offset, "Ch 3 Offset")
+    $ch3_offset := 3
+
     declare ui_button $send_cc_to_ch3
     set_control_par(get_ui_id($send_cc_to_ch3),$CONTROL_PAR_WIDTH,120)
     set_control_par(get_ui_id($send_cc_to_ch3),$CONTROL_PAR_POS_X,220)
@@ -113,7 +136,7 @@ on init
 
     {=== Starting Channel ===}
     declare ui_value_edit $start_ch(1, 16, 1) 
-    set_control_par(get_ui_id($start_ch), $CONTROL_PAR_WIDTH, 150)
+    set_control_par(get_ui_id($start_ch), $CONTROL_PAR_WIDTH, 108)
     set_control_par(get_ui_id($start_ch),$CONTROL_PAR_POS_X,350)
     set_control_par(get_ui_id($start_ch),$CONTROL_PAR_POS_Y,90)
     set_text($start_ch, "Starting Channel")
@@ -122,13 +145,66 @@ on init
     make_persistent($start_ch)
     read_persistent_var($start_ch)
 
+    {=== Playing Range ===}
+
+    declare ui_label $label_playing_range(1,2)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_WIDTH, 47)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_HEIGHT, 66)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_POS_X, 473)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_POS_Y, 90)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_FONT_TYPE, 13)
+    set_control_par(get_ui_id($label_playing_range), $CONTROL_PAR_TEXT_ALIGNMENT, 1)
+    hide_part ($label_playing_range, $HIDE_PART_BG)
+    set_text($label_playing_range, "Playing")
+    add_text_line($label_playing_range, "Range")
+
+    declare ui_value_edit $start_note(0, 127, $VALUE_EDIT_MODE_NOTE_NAMES) 
+    set_control_par(get_ui_id($start_note), $CONTROL_PAR_WIDTH, 45)
+    set_control_par(get_ui_id($start_note),$CONTROL_PAR_POS_X,520)
+    set_control_par(get_ui_id($start_note),$CONTROL_PAR_POS_Y,90)
+    set_text($start_note, "")
+    $start_note := 21
+    make_persistent($start_note)
+    read_persistent_var($start_note)
+
+    declare ui_button $button_midilearn_s
+    set_control_par(get_ui_id($button_midilearn_s),$CONTROL_PAR_WIDTH,45)
+    set_control_par(get_ui_id($button_midilearn_s),$CONTROL_PAR_POS_X,520)
+    set_control_par(get_ui_id($button_midilearn_s),$CONTROL_PAR_POS_Y,90+17)
+    set_text($button_midilearn_s,"Learn")
+
+    declare ui_value_edit $end_note(0, 127, $VALUE_EDIT_MODE_NOTE_NAMES) 
+    set_control_par(get_ui_id($end_note), $CONTROL_PAR_WIDTH, 45)
+    set_control_par(get_ui_id($end_note),$CONTROL_PAR_POS_X,570)
+    set_control_par(get_ui_id($end_note),$CONTROL_PAR_POS_Y,90)
+    set_text($end_note, "")
+    $end_note := 108
+    make_persistent($end_note)
+    read_persistent_var($end_note)
+
+    declare ui_button $button_midilearn_e
+    set_control_par(get_ui_id($button_midilearn_e),$CONTROL_PAR_WIDTH,45)
+    set_control_par(get_ui_id($button_midilearn_e),$CONTROL_PAR_POS_X,570)
+    set_control_par(get_ui_id($button_midilearn_e),$CONTROL_PAR_POS_Y,90+17)
+    set_text($button_midilearn_e,"Learn")
+
     {=== Panic ===}
     declare ui_button $panic
-    set_control_par(get_ui_id($panic),$CONTROL_PAR_WIDTH,60)
+    set_control_par(get_ui_id($panic),$CONTROL_PAR_WIDTH,40)
     set_control_par(get_ui_id($panic),$CONTROL_PAR_POS_X,0)
-    set_control_par(get_ui_id($panic),$CONTROL_PAR_POS_Y,50)
+    set_control_par(get_ui_id($panic),$CONTROL_PAR_POS_Y,40)
     set_text($panic,"Panic!")
     $panic := 0
+
+    {=== Pedal Detection ===}
+    declare ui_button $detect_pdl
+    set_control_par(get_ui_id($detect_pdl),$CONTROL_PAR_WIDTH,70)
+    set_control_par(get_ui_id($detect_pdl),$CONTROL_PAR_POS_X,0)
+    set_control_par(get_ui_id($detect_pdl),$CONTROL_PAR_POS_Y,83)
+    set_text($detect_pdl,"Detect Pedal")
+    $detect_pdl := 1
+    make_persistent($detect_pdl)
+    read_persistent_var($detect_pdl)
 
     {=== Others ===}
     declare $cnt := 0
@@ -136,6 +212,9 @@ on init
     declare %long_note_pressed[128]
 
     declare $last_note
+
+    declare $sus_pdl := 0                   {If sus pedal is down}
+    declare $sus_pdl_note_playing := 0      {If sus pedal is down and there is a note sustained by it. DO NOT USE when sus_pdl = 0}
     
 end on
 
@@ -148,6 +227,7 @@ on ui_control ($panic)
     end while
     $cnt := 0
     $panic := 0
+    set_text($msgbox, "")
 end on
 
 on ui_control ($mode_0)
@@ -174,10 +254,20 @@ end on
 on midi_in
 
     {=== MIDI Learn ===}
-    if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0 and $button_midilearn_ks = 1) 
+    if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2 # 0 and ($button_midilearn_ks = 1 or $button_midilearn_s = 1 or $button_midilearn_e = 1)) 
         ignore_midi 
-        $button_midilearn_ks := 0
-        $mode_ks := $MIDI_BYTE_1
+        if ($button_midilearn_ks = 1)
+            $button_midilearn_ks := 0
+            $mode_ks := $MIDI_BYTE_1
+        end if 
+        if ($button_midilearn_s = 1)
+            $button_midilearn_s := 0
+            $start_note := $MIDI_BYTE_1
+        end if 
+        if ($button_midilearn_e = 1)
+            $button_midilearn_e := 0
+            $end_note := $MIDI_BYTE_1
+        end if 
         exit
     end if
 
@@ -222,6 +312,7 @@ on midi_in
 
     if ($PLAYED_VOICES_TOTAL = 0)
         $cnt := 0
+        set_text($msgbox, "")
     end if
 
     {=== Send Main ===}
@@ -229,42 +320,89 @@ on midi_in
 
     {=== Send Overlay ===}
     if (($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON) and ($MIDI_BYTE_2{vel} # 0))     {Note On}
-        inc($cnt) 
-        if (($mode = 1 and $cnt <= 1) or ($mode = 2))
-            set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
-            %short_note_pressed[$MIDI_BYTE_1] := 1
-        end if
+        if ($start_note <= $MIDI_BYTE_1 and $MIDI_BYTE_1 <= $end_note)
+            inc($cnt) 
 
-        if ($long_overlay_on = 1)
-            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
-            %long_note_pressed[$MIDI_BYTE_1] := 1
-        end if
+            if ($cnt = 1 and not($detect_pdl = 1 and $sus_pdl = 1 and $sus_pdl_note_playing = 1))
+                set_text($msgbox, "Playing: Head")
+            else if ($cnt > 1 or ($detect_pdl = 1 and $sus_pdl = 1 and $sus_pdl_note_playing = 1))
+                set_text($msgbox, "Playing: Legato")
+            else
+                set_text($msgbox, "FUCK U KONTAKT! Wait a few seconds or click 'Panic!'")
+            end if
+            end if 
 
-        if ($cnt > 1)
-            set_midi($start_ch-1 + 1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
-            set_midi($start_ch-1 + 2, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)
-        end if
+            if ($detect_pdl = 1 and $sus_pdl = 1 and $sus_pdl_note_playing = 1)
+                add_text_line($msgbox, "(Pedal Down)")
+            end if
+            
+            { End previous notes }
+            if (($cnt > 1) or ($detect_pdl = 1 and $sus_pdl = 1 and $sus_pdl_note_playing = 1))
+                set_midi($start_ch-1 + 1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)                {end the last overlay short}
+                set_midi($start_ch-1 + $ch3_offset-1, $MIDI_COMMAND_NOTE_OFF, $last_note, 0)    {end the last ch3 long overlay}
+            end if
 
-        $last_note := $MIDI_BYTE_1
+            { Send new notes }
+            if (($mode = 1 and ($cnt <= 1 and not($detect_pdl = 1 and $sus_pdl = 1 and $sus_pdl_note_playing = 1))) or ($mode = 2))
+                set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+                %short_note_pressed[$MIDI_BYTE_1] := 1
+            end if
+
+            if ($long_overlay_on = 1)
+                set_midi($start_ch-1 + $ch3_offset-1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+                %long_note_pressed[$MIDI_BYTE_1] := 1
+            end if
+
+            $last_note := $MIDI_BYTE_1
+
+            { Pedal state update }
+            if ($sus_pdl = 1)
+                $sus_pdl_note_playing := 1
+            end if
+
+        end if
 
     else if ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_OFF or ($MIDI_COMMAND = $MIDI_COMMAND_NOTE_ON and $MIDI_BYTE_2{vel} = 0))   {Note Off}
-        dec($cnt) 
-        if (%short_note_pressed[$MIDI_BYTE_1] = 1)
-            set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
-            %short_note_pressed[$MIDI_BYTE_1] := 0
-        end if
-        if (%long_note_pressed[$MIDI_BYTE_1] = 1)
-            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
-            %long_note_pressed[$MIDI_BYTE_1] := 0
+        if ($start_note <= $MIDI_BYTE_1 and $MIDI_BYTE_1 <= $end_note)
+            dec($cnt) 
+
+            if ($cnt = 0)
+                set_text($msgbox, "")
+            else if ($cnt < 0)
+                set_text($msgbox, "FUCK U KONTAKT! Wait a few seconds or click 'Panic!'")
+            end if
+            end if
+
+            if (%short_note_pressed[$MIDI_BYTE_1] = 1)
+                set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+                %short_note_pressed[$MIDI_BYTE_1] := 0
+            end if
+            if (%long_note_pressed[$MIDI_BYTE_1] = 1)
+                set_midi($start_ch-1 + $ch3_offset-1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+                %long_note_pressed[$MIDI_BYTE_1] := 0
+            end if
         end if
 
     else    {Others, Send to Ch2 and Ch3?}
+        if ($MIDI_COMMAND = $MIDI_COMMAND_CC and $MIDI_BYTE_1 = 64)
+            if ($MIDI_BYTE_2 > 64)
+                $sus_pdl := 1
+                if ($cnt > 0)
+                    $sus_pdl_note_playing := 1
+                end if 
+            else 
+                $sus_pdl := 0
+                $sus_pdl_note_playing := 0
+            end if 
+        end if 
+
+        {Send to Ch2 and Ch3?}
         if ($send_cc_to_ch2 = 1)
             set_midi($start_ch-1 + 1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
         end if 
 
         if ($long_overlay_on = 1 and $send_cc_to_ch3 = 1)
-            set_midi($start_ch-1 + 2, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
+            set_midi($start_ch-1 + $ch3_offset-1, $MIDI_COMMAND, $MIDI_BYTE_1, $MIDI_BYTE_2)
         end if 
 
     end if
